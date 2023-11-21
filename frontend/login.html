@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>login</title>
+        <link rel="stylesheet" href="./styles/style.css">
+        <link rel="stylesheet" href="./styles/homepage.css">
+    </head>
+    <body>
+        <div id="parent-container">
+            <div id="main-container">
+                <h2>
+                    yttrium
+                </h2>
+                <div>
+                    <div id="input-section" arial-label="login">
+                        <input id="username" placeholder="username" type="text">
+                        <input id="password" placeholder="password" type="password">
+                        <input id="password-confirm" placeholder="confirm password" type="password">
+                        <h3 id="result-prompt"></h3>
+                    </div>
+                    <div id="login-section">
+                        <h4 id="login-button" onclick="submitRequest()">login</h4>
+                        <h6 id="login-prompt" onclick="toggleLoginState()">dont have an account? sign up</h6>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script src="./login.js"></script>
+    </body>
+</html>
