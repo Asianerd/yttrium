@@ -119,27 +119,6 @@ async fn create_message(chat_id: i32, content: String, pool: &State<Pool<Sqlite>
 }
 // endregion
 
-// region: chat fetch
-#[get("/<username>")]
-async fn fetch_message_data(username: String, pool: &State<Pool<Sqlite>>) -> String {
-    // list of all chats + first messsage in them
-    let chat_query = sqlx::query!("SELECT * FROM chat_data WHERE user = ?", username).fetch_all(&**pool).await.unwrap();
-    let mut display_data: HashMap<i64, (String, String)> = HashMap::new();
-    for chat in chat_query {
-        let c_id = chat.chat_id.unwrap();
-        let title = sqlx::query!("SELECT * FROM chat WHERE id = ?", c_id).fetch_one(&**pool).await.unwrap().name.unwrap();
-        let first_message_result = sqlx::query!("SELECT * FROM message WHERE chat_id = ? ORDER BY time DESC LIMIT 1", c_id).fetch_optional(&**pool).await.unwrap();
-        let first_message = match first_message_result {
-            Some(n) => n.content.unwrap(),
-            None => "".to_string()
-        };
-        display_data.insert(c_id, (title, first_message));
-    }
-
-    format!("{display_data:?}")
-}
-// endregion
-
 // region: testing
 // #[tokio::main]
 // async fn main() { 
@@ -181,11 +160,12 @@ async fn rocket() -> _ {
         .mount("/fetch_all", routes![fetch_all])
         .mount("/fetch_message", routes![fetch_message])
         .mount("/create_message", routes![create_message])
-        .mount("/fetch_message_data", routes![fetch_message_data])
 
         .mount("/user/user_exists", routes![user::user_exists])
         .mount("/user/attempt_login", routes![user::attempt_login])
         .mount("/user/attempt_signup", routes![user::attempt_signup])
+
+        .mount("/chat/sidebar", routes![chat::sidebar])
 
         .attach(CORS)
 }
