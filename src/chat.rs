@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, time::{SystemTime, UNIX_EPOCH}};
 
 use sqlx::{Pool, sqlite::Sqlite};
 
@@ -34,13 +34,46 @@ impl ChatData {
             seen: true
         }
     }
+
+    pub fn date_from_epoch(t: i64) -> String {
+        // let time = SystemTime::now()
+        //     .duration_since(UNIX_EPOCH)
+        //     .unwrap()
+        //     .as_secs() as i64;
+        
+        let diff = (SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64) - t;
+
+        // h 3600
+        // d 86400
+        // wk 604800
+
+        // if diff > 604800 {
+        //     return format!("{}wk", (diff / 604800) as i32);
+        // }
+
+        // if diff > 86400 {
+        //     return format!("{}d", (diff / 86400) as i32);
+        // }
+
+        for (value, name) in [(604800, "wk"), (86400, "d"), (3600, "h"), (60, "m"), (1, "s")] {
+            if diff > value {
+                return format!("{}{name}", (diff / value) as i32);
+            }
+        }
+
+        format!("{}s", diff as i32)
+    }
 }
 
 #[get("/<username>")]
 pub async fn sidebar(username: String, pool: &State<Pool<Sqlite>>) -> String {
     // list of all chats + first messsage in them
     let chat_query = sqlx::query!("SELECT * FROM chat_data WHERE user = ?", username).fetch_all(&**pool).await.unwrap();
-    let mut display_data: HashMap<i64, (String, String)> = HashMap::new();
+//                                      title, content, seen, date
+    let mut display_data: HashMap<i64, (String, String, bool, String)> = HashMap::new();
     for chat in chat_query {
         let c_id = chat.chat_id.unwrap();
         let title = sqlx::query!("SELECT * FROM chat WHERE id = ?", c_id).fetch_one(&**pool).await.unwrap().name.unwrap();
@@ -49,7 +82,7 @@ pub async fn sidebar(username: String, pool: &State<Pool<Sqlite>>) -> String {
             Some(n) => n.content.unwrap(),
             None => "".to_string()
         };
-        display_data.insert(c_id, (title, first_message));
+        display_data.insert(c_id, (title, first_message, chat.seen.unwrap(), ChatData::date_from_epoch(chat.last_interact.unwrap())));
     }
 
     serde_json::to_string(&display_data).unwrap()

@@ -1,20 +1,25 @@
 var sidebar = document.getElementById("sidebar-chat");
 var username = fetchCookie("username");
 
+var chat_id = 0; // chat currently opened
+
 send_request(`http://127.0.0.1:8000/chat/sidebar/${username}`, (r) => {
-    sidebar.innerHTML = '';
+    //sidebar.innerHTML = '';
 
     let data = JSON.parse(r);
 
     for (let element in data) {
         sidebar.innerHTML += `
-        <div class="sidebar-profile">
+        <div class="sidebar-profile${data[element][2] ? ' unread' : ''}" onclick="openChat(${element})">
             <img src="./assets/profile.png">
             <div id="user-info">
                 <h1>${data[element][0]}</h1>
-                <h2>${data[element][1]}</h2>
+                <span>
+                    <h2>${data[element][1]}</h2>
+                    <h2 id="date">• ${data[element][3]}</h2>
+                </span>
             </div>
-        </div>        
+        </div>
         `
     };
 })
@@ -51,3 +56,7 @@ function fetchCookie(name) {
     return result;
 }
 
+
+function openChat(id) {
+    console.log(`Opening chat ${id}`);
+}
